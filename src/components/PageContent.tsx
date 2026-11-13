@@ -30,20 +30,20 @@ export function PageContent({
         target="_blank"
         rel="noopener noreferrer"
       >
-        {safeUrl(link.image, true) ? (
-          <img
-            src={safeUrl(link.image, true)}
-            alt=""
-            loading="lazy"
-            width="48"
-            height="48"
-          />
-        ) : (
-          <span className="link-icon" aria-hidden="true">
-            {link.icon || "↗"}
-          </span>
-        )}
-        <span>
+        <span className="link-media" aria-hidden="true">
+          {safeUrl(link.image, true) ? (
+            <img
+              src={safeUrl(link.image, true)}
+              alt=""
+              loading="lazy"
+              width="40"
+              height="40"
+            />
+          ) : link.icon ? (
+            <span className="link-icon">{link.icon}</span>
+          ) : null}
+        </span>
+        <span className="link-copy">
           <strong>{link.title}</strong>
           {link.description && <small>{link.description}</small>}
         </span>
@@ -78,11 +78,27 @@ export function PageContent({
               height="104"
             />
           )}
-          <p className="eyebrow">LITERATURA & COMUNIDADE</p>
           <h1>{profile.name}</h1>
           <p className="bio">{profile.description}</p>
-          <span className="divider" aria-hidden="true" />
         </header>
+        <nav className="socials" aria-label="Redes sociais">
+          {document.socials
+            .filter((s) => s.active && safeUrl(s.url))
+            .map((s) => (
+              <a
+                key={s.id}
+                href={safeUrl(s.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.title}
+                title={s.title}
+              >
+                <span className="social-icon" aria-hidden="true">
+                  {s.icon || "↗"}
+                </span>
+              </a>
+            ))}
+        </nav>
         {links.filter((l) => !l.sectionId).map(card)}
         {document.sections
           .filter((s) => s.active)
@@ -106,23 +122,7 @@ export function PageContent({
             </p>
           </section>
         )}
-        <nav className="socials" aria-label="Redes sociais">
-          {document.socials
-            .filter((s) => s.active && safeUrl(s.url))
-            .map((s) => (
-              <a
-                key={s.id}
-                href={safeUrl(s.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.title}
-              >
-                <span aria-hidden="true">{s.icon || "↗"}</span>
-                <span>{s.title}</span>
-              </a>
-            ))}
-        </nav>
-        <footer>
+        <footer className="public-footer">
           {profile.logo &&
             profile.logo !== profile.avatar &&
             safeUrl(profile.logo, true) && (

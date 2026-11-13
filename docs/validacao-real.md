@@ -1,56 +1,67 @@
-# Validação real da integração — 13/11/2026
+# Validação da integração e refinamento visual — 13/11/2026
 
-Projeto exclusivo: `djwrzvxzxsbrymhfpomg`. Nenhuma migration remota, push ou deploy executado nesta validação.
+Projeto Supabase exclusivo: `djwrzvxzxsbrymhfpomg`. Migration e autorização das duas contas já executadas pela proprietária. Não repetir SQLs. Cadastro público desativado, URLs Auth e variáveis Vercel Production confirmadas. Nenhum push ou deploy realizado por Codex.
 
-## Configuração confirmada pela proprietária
+## Integração real
 
-Migration inicial e autorização das duas administradoras concluídas. Cadastro público desativado, Site URL/Redirect URLs configurados, variáveis Vite adicionadas à Vercel Production. Não repetir os SQLs de configuração.
-
-## Testes concluídos
+### Verificado por automação
 
 - Projeto conferido pela API: ID exato e status ACTIVE_HEALTHY.
-- Banco real via chave publishable: leitura pública `ls_published` permitida (200), ainda sem publicação no início da validação.
-- Leitura anônima de `ls_draft` e `admin_users` bloqueada (401/42501).
-- RPCs `ls_save_draft` e `ls_publish` bloqueadas para anônimo (401/42501); parâmetros inválidos de revisão/documento impediriam gravação mesmo em caso de regressão de grants. Publicação preservada entre as verificações.
-- Configuração real do Auth: `disable_signup=true`, email habilitado.
-- TypeScript, ESLint e build passaram após a correção do estado de autorização.
-- Testes de PostgreSQL local com Auth/Storage simulados passaram novamente. Esses testes locais não comprovam login ou upload reais.
+- Sessão da anacquesta no Chrome: painel autorizado e rascunho inicial carregado na revisão 0.
+- Criação do link `Conheça o Lendo Sáficos`, destino `https://www.lendosaficos.com.br`, e salvamento pela interface: revisão 1.
+- Isolamento do rascunho: após salvar a revisão 1, a consulta anônima a `ls_published` ainda retornava zero publicações.
+- Upload real de PNG da marca: URL pública no bucket `ls-linktree`, dentro do diretório UUID da administradora. Salvamento e recarga persistida da revisão 2 com um link.
+- A automação nativa foi interrompida na confirmação da publicação. Na retomada, consulta real comprovou `ls_published` na revisão 2, com o link esperado. A imagem publicada retornou HTTP 200 com tipo de conteúdo de imagem, sem autenticação. A página pública local renderizou o link e as imagens corretamente.
+- Leitura anônima de `ls_draft` e `admin_users` negada (401/42501). RPCs `ls_save_draft` e `ls_publish` negadas para anônimo (401/42501). Tentativas usaram documento/revisão inválidos para impedir gravação mesmo em caso de regressão dos grants. Conteúdo publicado preservado entre essas verificações.
+- Configuração pública Auth: `disable_signup=true`, provedor de email habilitado.
 
-Verificação pública reproduzível, sem chaves no código e sem criar usuários ou enviar emails:
+### Confirmado manualmente pela proprietária
 
-```powershell
-node scripts/check-public.mjs
-```
+- Login inicial com `anacquesta@gmail.com`.
+- Logout, acesso direto a `/admin` redirecionando ao login, login com `anaflavial1n4@gmail.com`, painel e rascunho carregados, seguido de novo logout: todos os passos confirmados como funcionando.
+- Captura enviada mostra a segunda administradora e a pré-visualização do rascunho carregada.
 
-## Correção restrita
+Não houve acesso a senhas ou extração de tokens. Não foi criada terceira conta para teste.
 
-`src/lib/auth.tsx`: a renovação do token da mesma conta agora preserva o editor enquanto revalida a autorização. Antes, a associação da autorização ao token fazia a rota mostrar carregamento e desmontar o editor a cada renovação, perdendo alterações não salvas. A autorização fica associada ao UUID; cada novo token continua disparando consulta a Auth e à RPC. Troca de conta, logout e negação de acesso continuam protegidos. A autorização das gravações permanece no banco.
+### Limites da validação
 
-Esta correção passou nas verificações estáticas; o comportamento com renovação real ainda depende de sessão autenticada.
+Recuperação por email, renovação real de token, conflito concorrente entre sessões e usuário autenticado sem autorização não foram exercitados no ambiente real. Os testes SQL locais anteriores cobrem concorrência e bloqueio de terceiros com Auth/Storage simulados; não devem ser descritos como testes de login reais. Esses limites não impedem o refinamento visual solicitado, mas precisam ser considerados antes da aprovação final de produção.
 
-## Aguardando login feito pela proprietária
+A publicação de validação contém um link real para o site da marca e uma imagem da marca. Não há texto fictício de teste publicado. A revisão visual posterior usou fixtures locais ignoradas pelo Git e não gravou conteúdo no Supabase.
 
-Foi aberta a página `http://127.0.0.1:5173/admin/login` no navegador do Codex. A proprietária deve digitar sua senha somente no navegador e informar quando o painel abrir e qual conta utilizou. Não compartilhar senha no chat.
+## Refinamento visual
 
-Pendentes de validação real:
+Alterações restritas ao renderizador compartilhado `src/components/PageContent.tsx` e seus estilos em `src/styles.css`:
 
-- Login e autorização de cada uma das duas contas.
-- Leitura e salvamento do rascunho, incluindo recarga e conflito de revisão.
-- Prévia e isolamento entre rascunho e publicação.
-- Publicação pela RPC e leitura pública da nova versão.
-- Upload de imagem, URL pública e renderização.
-- Logout e bloqueio do painel após sair.
-- Recuperação por email e bloqueio de usuário autenticado não autorizado (não criar conta adicional sem combinar).
+- Coluna centralizada de até 480 px, perfil compacto e menos espaços verticais.
+- Redes sociais em linha abaixo da descrição, com nomes acessíveis e área de toque de 44 px.
+- Botões empilhados com título geometricamente centralizado, independentemente da presença de ícone ou imagem.
+- Altura mínima de 64 px; formato compacto preservado com mínimo de 56 px. Descrições e títulos longos podem aumentar a altura para manter leitura e toque adequados.
+- Seções discretas, rodapé leve, Playfair Display e DM Sans, paletas rosa/vinho/neutros e estilos existentes preservados.
+- A prévia usa exatamente `PageContent`, sem regras próprias de tipografia ou espaçamento que divergiam da página pública.
+- Nenhuma alteração em banco, RLS, Auth ou funcionalidades do painel nesta entrega.
 
-Não declarar esses fluxos aprovados antes da execução real. As credenciais não são necessárias no chat. O conteúdo de teste deverá usar a identidade da marca e ter as alterações temporárias removidas no próprio painel ao finalizar.
+## Verificações visuais e técnicas
 
-## Arquivos para o commit da entrega completa
+- Página pública real revisada em desktop e 390 × 844, com imagens carregadas e sem transbordamento horizontal.
+- Fixture local com redes, seções, título longo, descrição, link destacado, link sem ícone e link compacto: nove combinações de paleta/estilo verificadas em 390 px. Nenhum transbordamento; título centralizado (desvio medido de 0 px).
+- Mesma fixture em 320 × 760: sem transbordamento; redes antes dos links; três links visíveis e link da seção inativa ausente. Todos os links externos com `_blank`, `noopener` e `noreferrer`.
+- Desktop em 1280 px: coluna medida em 480 px.
+- TypeScript, ESLint e build de produção passaram após o refinamento.
+- Verificação pública reproduzível, sem alteração de dados: `node scripts/check-public.mjs`.
 
-O repositório local ainda não possui commit na main e os arquivos da aplicação aparecem como não rastreados. Revisar e incluir os arquivos abaixo, abrangendo também as etapas anteriores:
+Capturas e fixtures ficam somente em `backups/`, ignorado pelo Git. As fixtures não são rotas da aplicação nem entram no build.
 
-```powershell
-git add .gitignore .env.example README.md package.json package-lock.json tsconfig.json vite.config.ts eslint.config.js vercel.json index.html public/logo.png public/og.png src/main.tsx src/App.tsx src/styles.css src/components/PageContent.tsx src/lib/auth.tsx src/lib/config.ts src/lib/document.ts src/lib/media.ts src/lib/supabase.ts src/lib/validation.ts src/pages/AdminPage.tsx src/pages/LoginPage.tsx src/pages/PublicPage.tsx scripts/check-public.mjs docs/etapa-1.md docs/etapa-3.md docs/configuracao.md docs/validacao-real.md supabase/migrations/20261113192026_linktree_ls_new_project.sql supabase/manual/autorizar-administradoras.sql
-git diff --cached --stat
-```
+## Entrega e commit
 
-Não incluir `.env.local`, `node_modules`, `dist` ou `backups`. Não executar push. Sugestão de mensagem após a validação: `feat: reconstrói Linktree LS com Supabase Auth, publicação e Storage`.
+O commit anterior `6f95cb0` já contém a correção da renovação da sessão e as verificações de acesso. Não incluí-lo novamente nesta entrega.
+
+Adicionar apenas:
+
+- `src/components/PageContent.tsx`
+- `src/styles.css`
+- `docs/validacao-real.md`
+
+Mensagem: `style: refina layout público mantendo identidade Lendo Sáficos`
+
+Não incluir `.env.local`, credenciais, `node_modules`, `dist` ou `backups`. Não há nova migration ou configuração remota necessária para esse ajuste visual. O push à main continua aguardando autorização de publicação, pois pode disparar a Vercel automaticamente.
