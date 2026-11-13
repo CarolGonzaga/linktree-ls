@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(!supabase);
   const [recovery, setRecovery] = useState(false);
-  const [access, setAccess] = useState({ token: "", admin: false, error: "" });
+  const [access, setAccess] = useState({ userId: "", admin: false, error: "" });
   useEffect(() => {
     if (!supabase) return;
     const {
@@ -36,13 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(next);
       setInitialized(true);
       if (event === "PASSWORD_RECOVERY") setRecovery(true);
-      if (event === "SIGNED_OUT") setRecovery(false);
+      if (event === "SIGNED_OUT") {
+        setRecovery(false);
+        setAccess({ userId: "", admin: false, error: "" });
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
   const token = session?.access_token || "";
+  const userId = session?.user.id || "";
   useEffect(() => {
-    if (!token || !supabase) return;
+    if (!token || !userId || !supabase) return;
     let cancelled = false;
     const api = supabase;
     async function check() {
@@ -53,27 +57,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw identityError || new Error("Sessão inválida. Entre novamente.");
         const { data, error } = await api.rpc("ls_is_admin");
         if (error) throw error;
-        if (!cancelled) setAccess({ token, admin: data === true, error: "" });
+        if (!cancelled) setAccess({ userId, admin: data === true, error: "" });
       } catch (error) {
         if (!cancelled)
-          setAccess({ token, admin: false, error: errorMessage(error) });
+          setAccess({ userId, admin: false, error: errorMessage(error) });
       }
     }
     void check();
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, userId]);
+  // Revalidar o token da mesma conta não desmonta o editor nem perde o rascunho.
   return (
     <AuthContext.Provider
       value={{
         session,
-        ready: initialized && (!token || access.token === token),
-        admin: !!token && access.token === token && access.admin,
+        ready: initialized && (!token || access.userId === userId),
+        admin: !!token && access.userId === userId && access.admin,
         recovery,
         error:
           configurationError ||
-          (token && access.token === token ? access.error : ""),
+          (token && access.userId === userId ? access.error : ""),
       }}
     >
       {children}

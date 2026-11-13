@@ -1,3 +1,5 @@
+> Atualização: a proprietária confirmou que todas as configurações deste documento foram concluídas, incluindo autorização dos UUIDs, cadastro desativado, URLs de Auth e Vercel Production. Não repetir os SQLs. Estado dos testes em [validacao-real.md](validacao-real.md).
+
 # Configuração atual — Linktree LS
 
 ## Confirmado

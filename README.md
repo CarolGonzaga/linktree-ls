@@ -20,7 +20,7 @@ Painel: edição de links, seções, redes, perfil e aparência; uploads; salvam
 
 ## Situação do Supabase
 
-A proprietária confirmou a execução de `supabase/migrations/20261113192026_linktree_ls_new_project.sql`. **Não executar novamente.** As contas foram criadas e seus UUIDs foram informados. Falta executar manualmente [autorizar-administradoras.sql](supabase/manual/autorizar-administradoras.sql) no mesmo projeto e confirmar. Esse script verifica a correspondência entre UUIDs e emails antes de preencher os dois slots administrativos.
+A proprietária confirmou a execução de `supabase/migrations/20261113192026_linktree_ls_new_project.sql`. **Não executar novamente.** As contas foram criadas e seus UUIDs foram informados. A proprietária confirmou a execução de [autorizar-administradoras.sql](supabase/manual/autorizar-administradoras.sql) e a configuração de Auth e Vercel Production. Não repetir os SQLs. A validação autenticada aguarda login no navegador; veja [estado dos testes](docs/validacao-real.md). Esse script verifica a correspondência entre UUIDs e emails antes de preencher os dois slots administrativos.
 
 Ver [configuração atual e ações manuais](docs/configuracao.md) e [validação da integração](docs/etapa-3.md).
 
