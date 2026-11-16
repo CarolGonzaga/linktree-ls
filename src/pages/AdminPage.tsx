@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { uploadImage } from "../lib/media";
 import { validateDocument } from "../lib/validation";
 import { PageContent } from "../components/PageContent";
+import { socialIconOptions } from "../components/SocialIcon";
 import {
   moveItem,
   type LinkItem,
@@ -739,7 +740,7 @@ function DraftEditor({
                               id: crypto.randomUUID(),
                               title: "Instagram",
                               url: "",
-                              icon: "◎",
+                              icon: "",
                               active: true,
                             },
                           ],
@@ -785,12 +786,24 @@ function DraftEditor({
                         maxLength={2048}
                         onChange={(url) => socialUpdate(item.id, { url })}
                       />
-                      <Field
-                        title="Ícone (símbolo ou emoji)"
-                        value={item.icon}
-                        maxLength={40}
-                        onChange={(icon) => socialUpdate(item.id, { icon })}
-                      />
+                      <label>
+                        Ícone da rede
+                        <select
+                          value={
+                            socialIconOptions.some(([name]) => name === item.icon)
+                              ? item.icon
+                              : ""
+                          }
+                          onChange={(event) =>
+                            socialUpdate(item.id, { icon: event.target.value })
+                          }
+                        >
+                          <option value="">Automático pela plataforma</option>
+                          {socialIconOptions.map(([name, label]) => (
+                            <option key={name} value={name}>{label}</option>
+                          ))}
+                        </select>
+                      </label>
                       <Check
                         checked={item.active}
                         onChange={(active) => socialUpdate(item.id, { active })}

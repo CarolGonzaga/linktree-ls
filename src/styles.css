@@ -297,15 +297,18 @@ img {
   max-width: 100%;
   padding: 6px;
   border-radius: 50%;
+  color: var(--social-icon-color, var(--ink));
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
-.socials a:hover {
+.socials a:hover,
+.socials a:focus-visible {
   background: var(--surface);
+  color: var(--social-icon-hover-color, var(--accent));
 }
 .social-icon {
-  font-size: 1.4rem;
-  overflow-wrap: anywhere;
+  display: block;
+  flex: none;
 }
 .public-footer {
   margin: 28px 0 0;

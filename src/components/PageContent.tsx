@@ -4,6 +4,7 @@ import {
   type LinkItem,
   type PageDocument,
 } from "../lib/document";
+import { SocialIcon } from "./SocialIcon";
 
 export function PageContent({
   document = initialDocument,
@@ -93,9 +94,7 @@ export function PageContent({
                 aria-label={s.title}
                 title={s.title}
               >
-                <span className="social-icon" aria-hidden="true">
-                  {s.icon || "↗"}
-                </span>
+                <SocialIcon social={s} />
               </a>
             ))}
         </nav>
