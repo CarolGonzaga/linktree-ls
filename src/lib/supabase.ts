@@ -16,7 +16,7 @@ export function errorMessage(error: unknown) {
     error && typeof error === "object" && "code" in error
       ? String(error.code)
       : "";
-  if (code === "40001")
+  if (code === "PT409" || code === "40001")
     return "Outra administradora alterou o rascunho. Recarregue a versão salva antes de continuar.";
   if (code === "42501")
     return "Sua conta não tem autorização para esta operação.";
