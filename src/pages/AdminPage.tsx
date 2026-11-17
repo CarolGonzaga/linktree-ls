@@ -10,6 +10,7 @@ import { PageContent } from "../components/PageContent";
 import { socialIconOptions } from "../components/SocialIcon";
 import {
   moveItem,
+  safeUrl,
   type LinkItem,
   type PageDocument,
   type Social,
@@ -19,8 +20,8 @@ const tabs = [
   "Links",
   "Seções",
   "Redes sociais",
-  "Perfil",
-  "Aparência",
+  "Cabeçalho",
+  "Design",
   "Publicação",
 ] as const;
 type Tab = (typeof tabs)[number];
@@ -31,6 +32,7 @@ function Field({
   multiline = false,
   maxLength = 2000,
   type = "text",
+  counter = false,
 }: {
   title: string;
   value: string;
@@ -38,14 +40,16 @@ function Field({
   multiline?: boolean;
   maxLength?: number;
   type?: string;
+  counter?: boolean;
 }) {
+  const limit = counter ? Math.max(maxLength, value.length) : maxLength;
   return (
     <label>
       {title}
       {multiline ? (
         <textarea
           value={value}
-          maxLength={maxLength}
+          maxLength={limit}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
         />
@@ -53,9 +57,14 @@ function Field({
         <input
           value={value}
           type={type}
-          maxLength={maxLength}
+          maxLength={limit}
           onChange={(e) => onChange(e.target.value)}
         />
+      )}
+      {counter && (
+        <small className="field-counter" aria-hidden="true">
+          {value.length}/{maxLength}
+        </small>
       )}
     </label>
   );
@@ -352,11 +361,15 @@ function DraftEditor({
   function mediaField(key: "logo" | "avatar" | "background") {
     const title = {
       logo: "Logo",
-      avatar: "Avatar",
+      avatar: "Imagem de perfil",
       background: "Imagem de fundo",
     }[key];
+    const image = key !== "background" && safeUrl(document.profile[key], true);
     return (
       <div className="media-field" key={key}>
+        {image && (
+          <img className="design-media-preview" src={image} alt={title} />
+        )}
         <Field
           title={`${title} · URL HTTPS ou asset da marca`}
           value={document.profile[key]}
@@ -389,7 +402,7 @@ function DraftEditor({
               disabled={busy}
               onClick={() => {
                 setTab(item);
-                if (item === "Aparência") openPreview();
+                if (item === "Cabeçalho" || item === "Design") openPreview();
               }}
             >
               <span aria-hidden="true">
@@ -471,7 +484,9 @@ function DraftEditor({
         )}
         <div
           className={
-            tab === "Aparência" ? "workspace design-workspace" : "workspace"
+            tab === "Cabeçalho" || tab === "Design"
+              ? "workspace design-workspace"
+              : "workspace"
           }
         >
           <section className="editor">
@@ -766,6 +781,16 @@ function DraftEditor({
               )}
               {tab === "Redes sociais" && (
                 <>
+                  <div className="panel">
+                    <FollowersEditor
+                      value={document.appearance.followers}
+                      onChange={(followers) =>
+                        update({
+                          appearance: { ...document.appearance, followers },
+                        })
+                      }
+                    />
+                  </div>
                   <div className="section-toolbar">
                     <p>{document.socials.length}/20 redes</p>
                     <button
@@ -857,74 +882,68 @@ function DraftEditor({
                   ))}
                 </>
               )}
-              {tab === "Perfil" && (
-                <div className="panel">
-                  <h2>A essência da sua página</h2>
-                  <Field
-                    title="Nome da marca"
-                    value={document.profile.name}
-                    maxLength={100}
-                    onChange={(name) =>
-                      update({ profile: { ...document.profile, name } })
-                    }
-                  />
-                  <Field
-                    title="Descrição"
-                    value={document.profile.description}
-                    multiline
-                    onChange={(description) =>
-                      update({ profile: { ...document.profile, description } })
-                    }
-                  />
-                  <Field
-                    title="Rodapé"
-                    value={document.profile.footer}
-                    onChange={(footer) =>
-                      update({ profile: { ...document.profile, footer } })
-                    }
-                  />
-                  {mediaField("avatar")}
-                  <FollowersEditor
-                    value={document.appearance.followers}
-                    onChange={(followers) =>
-                      update({
-                        appearance: { ...document.appearance, followers },
-                      })
-                    }
-                  />
-                </div>
-              )}
-              {tab === "Aparência" && (
+              {tab === "Cabeçalho" && (
                 <AppearanceEditor
+                  key="header"
+                  section="header"
                   appearance={document.appearance}
                   update={(patch) =>
                     update({ appearance: { ...document.appearance, ...patch } })
                   }
                   headerFields={
                     <>
+                      {mediaField("avatar")}
                       <Field
-                        title="Nome da marca"
+                        title="Título"
                         value={document.profile.name}
-                        maxLength={100}
+                        maxLength={30}
+                        counter
                         onChange={(name) =>
                           update({ profile: { ...document.profile, name } })
                         }
                       />
                       <Field
-                        title="Descrição"
+                        title="Bio"
                         value={document.profile.description}
                         multiline
+                        maxLength={160}
+                        counter
                         onChange={(description) =>
                           update({
                             profile: { ...document.profile, description },
                           })
                         }
                       />
-                      {mediaField("avatar")}
-                      {mediaField("logo")}
                     </>
                   }
+                  logoField={mediaField("logo")}
+                />
+              )}
+              {tab === "Design" && (
+                <AppearanceEditor
+                  key="design"
+                  section="design"
+                  appearance={document.appearance}
+                  update={(patch) =>
+                    update({ appearance: { ...document.appearance, ...patch } })
+                  }
                   backgroundField={mediaField("background")}
+                  footerField={
+                    <>
+                      <Field
+                        title="Texto do rodapé"
+                        multiline
+                        value={document.profile.footer}
+                        onChange={(footer) =>
+                          update({ profile: { ...document.profile, footer } })
+                        }
+                      />
+                      <p>
+                        Para incluir um hiperlink, escreva{" "}
+                        <code>[Texto do link](https://exemplo.com)</code>.
+                      </p>
+                    </>
+                  }
                 />
               )}
               {tab === "Publicação" && (

@@ -19,5 +19,11 @@ export function validateDocument(d: PageDocument): string | null {
   for (const key of ["logo", "avatar", "background"] as const)
     if (d.profile[key] && !safeUrl(d.profile[key], true))
       return "Use uma URL HTTPS válida para as imagens do perfil.";
+  if (
+    d.appearance.wallpaper === "video" &&
+    d.appearance.wallpaperVideo &&
+    !safeUrl(d.appearance.wallpaperVideo, true).startsWith("https://")
+  )
+    return "Use uma URL HTTPS válida para o vídeo de fundo.";
   return null;
 }

@@ -1,3 +1,5 @@
+import type { PageFont, TitleFont } from "./fonts";
+
 export type Section = { id: string; title: string; active: boolean };
 export type LinkItem = {
   id: string;
@@ -38,9 +40,19 @@ export type PageDocument = {
     buttons: "rounded" | "soft" | "outline";
     header?: "classic" | "hero" | "banner" | "cutout" | "shape";
     heading?: "text" | "logo";
-    wallpaper?: "solid" | "gradient" | "image";
-    font?: "dm-sans" | "georgia" | "system";
-    titleFont?: "playfair" | "body";
+    themePreset?: string;
+    wallpaper?: "solid" | "gradient" | "blur" | "pattern" | "image" | "video";
+    wallpaperVideo?: string;
+    gradient?: "custom" | "rose" | "wine" | "warm";
+    gradientColor?: string;
+    gradientDirection?: "up" | "down" | "radial";
+    wallpaperNoise?: boolean;
+    buttonStyle?: "solid" | "glass" | "outline";
+    buttonRadius?: "square" | "soft" | "rounded" | "pill";
+    buttonShadow?: "none" | "soft" | "strong" | "hard";
+    font?: PageFont;
+    titleFont?: TitleFont;
+    useTitleFont?: boolean;
     socialPlacement?: "top" | "bottom";
     colors?: Partial<
       Record<"page" | "text" | "title" | "button" | "buttonText", string>
