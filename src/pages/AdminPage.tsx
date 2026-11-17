@@ -1,9 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { client, errorMessage } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { uploadImage } from "../lib/media";
 import { validateDocument } from "../lib/validation";
+import { AppearanceEditor } from "../components/AppearanceEditor";
+import { FollowersEditor } from "../components/FollowersEditor";
 import { PageContent } from "../components/PageContent";
 import { socialIconOptions } from "../components/SocialIcon";
 import {
@@ -190,6 +192,14 @@ function DraftEditor({
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   const [reviewed, setReviewed] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [changed, setChanged] = useState(false);
+  const publishDialog = useRef<HTMLDialogElement>(null);
+  const publicationBlock = changed
+    ? "Salve o rascunho antes de publicar."
+    : !reviewed && !preview
+      ? "Ao clicar em Publicar página, a prévia será aberta para revisão."
+      : "";
   async function save() {
     const invalid = validateDocument(document);
     if (invalid) {
@@ -219,15 +229,24 @@ function DraftEditor({
       setBusy(false);
     }
   }
-  async function publish() {
-    if (
-      changed ||
-      !reviewed ||
-      !window.confirm(
-        "Publicar este rascunho? A página dos visitantes será atualizada.",
-      )
-    )
+  function requestPublication() {
+    if (busy) return;
+    if (changed) {
+      setFailed(false);
+      setMessage("Clique em Salvar rascunho para publicar suas alterações.");
       return;
+    }
+    if (!reviewed && !preview) {
+      openPreview();
+      setFailed(false);
+      setMessage("Confira a prévia e clique novamente em Publicar página.");
+      return;
+    }
+    publishDialog.current?.showModal();
+  }
+  async function publish() {
+    if (busy || changed || (!reviewed && !preview)) return;
+    publishDialog.current?.close();
     setBusy(true);
     setMessage("");
     setFailed(false);
@@ -305,8 +324,6 @@ function DraftEditor({
   const [document, setDocument] = useState<PageDocument>(() =>
     structuredClone(initial.document),
   );
-  const [preview, setPreview] = useState(false);
-  const [changed, setChanged] = useState(false);
   useEffect(() => {
     if (!changed) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -370,7 +387,10 @@ function DraftEditor({
               className={tab === item ? "selected" : ""}
               aria-current={tab === item ? "page" : undefined}
               disabled={busy}
-              onClick={() => setTab(item)}
+              onClick={() => {
+                setTab(item);
+                if (item === "Aparência") openPreview();
+              }}
             >
               <span aria-hidden="true">
                 {["◫", "↗", "☰", "◎", "♙", "◐", "↑"][i]}
@@ -406,14 +426,29 @@ function DraftEditor({
               {preview ? "Fechar prévia" : "Pré-visualizar"}{" "}
               <span aria-hidden="true">↗</span>
             </button>
+            <button
+              className="primary"
+              disabled={busy}
+              aria-describedby={
+                publicationBlock ? "publication-block" : undefined
+              }
+              onClick={requestPublication}
+            >
+              Publicar página
+            </button>
             <button disabled={busy} onClick={() => void logout()}>
               Sair
             </button>
           </div>
         </header>
         <div className="local-banner" role="status">
-          {changed ? "Alterações não salvas" : "Rascunho salvo"} · Revisão{" "}
-          {revision} · {new Date(updatedAt).toLocaleString("pt-BR")}
+          <span>
+            {changed ? "Alterações não salvas" : "Rascunho salvo"} · Revisão{" "}
+            {revision} · {new Date(updatedAt).toLocaleString("pt-BR")}
+            {publicationBlock && (
+              <span id="publication-block"> · {publicationBlock}</span>
+            )}
+          </span>
           <button
             disabled={busy}
             onClick={() => {
@@ -434,7 +469,11 @@ function DraftEditor({
             {message}
           </div>
         )}
-        <div className="workspace">
+        <div
+          className={
+            tab === "Aparência" ? "workspace design-workspace" : "workspace"
+          }
+        >
           <section className="editor">
             <fieldset className="editor-fields" disabled={busy}>
               <div className="page-heading">
@@ -790,7 +829,9 @@ function DraftEditor({
                         Ícone da rede
                         <select
                           value={
-                            socialIconOptions.some(([name]) => name === item.icon)
+                            socialIconOptions.some(
+                              ([name]) => name === item.icon,
+                            )
                               ? item.icon
                               : ""
                           }
@@ -800,7 +841,9 @@ function DraftEditor({
                         >
                           <option value="">Automático pela plataforma</option>
                           {socialIconOptions.map(([name, label]) => (
-                            <option key={name} value={name}>{label}</option>
+                            <option key={name} value={name}>
+                              {label}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -841,60 +884,48 @@ function DraftEditor({
                     }
                   />
                   {mediaField("avatar")}
+                  <FollowersEditor
+                    value={document.appearance.followers}
+                    onChange={(followers) =>
+                      update({
+                        appearance: { ...document.appearance, followers },
+                      })
+                    }
+                  />
                 </div>
               )}
               {tab === "Aparência" && (
-                <div className="panel">
-                  <h2>Um toque de Lendo Sáficos</h2>
-                  <fieldset>
-                    <legend>Paleta</legend>
-                    <div className="palette-options">
-                      {(["rose", "wine", "neutral"] as const).map(
-                        (palette, index) => (
-                          <label key={palette}>
-                            <input
-                              type="radio"
-                              name="palette"
-                              checked={document.appearance.palette === palette}
-                              onChange={() =>
-                                update({
-                                  appearance: {
-                                    ...document.appearance,
-                                    palette,
-                                  },
-                                })
-                              }
-                            />
-                            <span className={`swatch ${palette}`} />
-                            {["Rosa suave", "Vinho", "Neutros"][index]}
-                          </label>
-                        ),
-                      )}
-                    </div>
-                  </fieldset>
-                  <label>
-                    Estilo dos botões
-                    <select
-                      value={document.appearance.buttons}
-                      onChange={(e) =>
-                        update({
-                          appearance: {
-                            ...document.appearance,
-                            buttons: e.target
-                              .value as PageDocument["appearance"]["buttons"],
-                          },
-                        })
-                      }
-                    >
-                      <option value="rounded">Arredondado</option>
-                      <option value="soft">Cantos suaves</option>
-                      <option value="outline">Contorno</option>
-                    </select>
-                  </label>
-                  {mediaField("logo")}
-                  {mediaField("avatar")}
-                  {mediaField("background")}
-                </div>
+                <AppearanceEditor
+                  appearance={document.appearance}
+                  update={(patch) =>
+                    update({ appearance: { ...document.appearance, ...patch } })
+                  }
+                  headerFields={
+                    <>
+                      <Field
+                        title="Nome da marca"
+                        value={document.profile.name}
+                        maxLength={100}
+                        onChange={(name) =>
+                          update({ profile: { ...document.profile, name } })
+                        }
+                      />
+                      <Field
+                        title="Descrição"
+                        value={document.profile.description}
+                        multiline
+                        onChange={(description) =>
+                          update({
+                            profile: { ...document.profile, description },
+                          })
+                        }
+                      />
+                      {mediaField("avatar")}
+                      {mediaField("logo")}
+                    </>
+                  }
+                  backgroundField={mediaField("background")}
+                />
               )}
               {tab === "Publicação" && (
                 <div className="panel">
@@ -907,16 +938,13 @@ function DraftEditor({
                   <button onClick={openPreview}>Abrir pré-visualização</button>
                   <hr />
                   <p className="notice">
-                    {changed
-                      ? "Salve as alterações antes de publicar."
-                      : reviewed
-                        ? "Prévia conferida. Você pode publicar a revisão salva."
-                        : "Abra a pré-visualização antes de publicar."}
+                    {publicationBlock ||
+                      "Prévia aberta ou conferida. Você pode publicar a revisão salva."}
                   </p>
                   <button
                     className="primary"
-                    disabled={busy || changed || !reviewed}
-                    onClick={() => void publish()}
+                    disabled={busy}
+                    onClick={requestPublication}
                   >
                     Publicar página
                   </button>
@@ -942,6 +970,27 @@ function DraftEditor({
             </aside>
           )}
         </div>
+        <dialog
+          className="publish-dialog"
+          ref={publishDialog}
+          aria-labelledby="publish-dialog-title"
+          aria-describedby="publish-dialog-description"
+        >
+          <h2 id="publish-dialog-title">Publicar página?</h2>
+          <p id="publish-dialog-description">
+            A revisão salva será exibida na página pública.
+          </p>
+          <form method="dialog" className="toolbar-actions">
+            <button type="submit">Cancelar</button>
+            <button
+              className="primary"
+              type="button"
+              onClick={() => void publish()}
+            >
+              Confirmar publicação
+            </button>
+          </form>
+        </dialog>
       </div>
     </div>
   );

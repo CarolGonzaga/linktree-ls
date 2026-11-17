@@ -18,6 +18,12 @@ export type Social = {
   icon: string;
   active: boolean;
 };
+export type FollowerNetwork =
+  "instagram" | "tiktok" | "x" | "youtube" | "facebook";
+export type Followers = {
+  show: boolean;
+  profiles: Partial<Record<FollowerNetwork, { url: string; count?: number }>>;
+};
 export type PageDocument = {
   profile: {
     name: string;
@@ -30,6 +36,16 @@ export type PageDocument = {
   appearance: {
     palette: "rose" | "wine" | "neutral";
     buttons: "rounded" | "soft" | "outline";
+    header?: "classic" | "hero" | "banner" | "cutout" | "shape";
+    heading?: "text" | "logo";
+    wallpaper?: "solid" | "gradient" | "image";
+    font?: "dm-sans" | "georgia" | "system";
+    titleFont?: "playfair" | "body";
+    socialPlacement?: "top" | "bottom";
+    colors?: Partial<
+      Record<"page" | "text" | "title" | "button" | "buttonText", string>
+    >;
+    followers?: Followers;
   };
   sections: Section[];
   links: LinkItem[];
