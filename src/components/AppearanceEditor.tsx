@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import {
+  applyTheme,
   getButtonStyle,
   getGradientPreset,
   getTheme,
@@ -123,13 +124,7 @@ function ThemePicker({ appearance, update }: AppearanceControl) {
   );
   function choose(id: string) {
     const preset = getTheme(id);
-    if (preset)
-      update({
-        themePreset: id,
-        wallpaper: preset.gradient ? "gradient" : "solid",
-        gradient: "custom",
-        gradientColor: undefined,
-      });
+    if (preset) update(applyTheme(id));
   }
   return (
     <>
@@ -170,8 +165,10 @@ function ThemePicker({ appearance, update }: AppearanceControl) {
         {!curated && (
           <button
             type="button"
-            aria-pressed={!appearance.themePreset}
-            onClick={() => update({ themePreset: undefined })}
+            aria-pressed={
+              !appearance.themePreset || appearance.themeCustomized === true
+            }
+            onClick={() => update({ themeCustomized: true })}
           >
             <span className="theme-thumbnail theme-custom" aria-hidden="true">
               ✦
@@ -183,7 +180,10 @@ function ThemePicker({ appearance, update }: AppearanceControl) {
           <button
             type="button"
             key={preset.id}
-            aria-pressed={appearance.themePreset === preset.id}
+            aria-pressed={
+              appearance.themePreset === preset.id &&
+              !appearance.themeCustomized
+            }
             onClick={() => choose(preset.id)}
           >
             <span
@@ -209,7 +209,7 @@ function ThemePicker({ appearance, update }: AppearanceControl) {
 
 export function AppearanceEditor({
   appearance,
-  update,
+  update: onUpdate,
   section,
   headerFields,
   logoField,
@@ -223,6 +223,9 @@ export function AppearanceEditor({
   footerField?: ReactNode;
 }) {
   const [group, setGroup] = useState<(typeof groups)[number][0] | null>(null);
+  function update(patch: Partial<Appearance>) {
+    onUpdate({ ...patch, themeCustomized: true });
+  }
   const preset = getTheme(appearance.themePreset);
   const theme = preset ?? themes[appearance.palette] ?? themes.rose;
   const wallpaper = appearance.wallpaper ?? "image";
@@ -342,7 +345,9 @@ export function AppearanceEditor({
 
   if (group === null) {
     const labels = {
-      Tema: preset?.name ?? "Personalizado",
+      Tema: appearance.themeCustomized
+        ? "Personalizado"
+        : (preset?.name ?? "Personalizado"),
       Fundo: wallpapers.find(([id]) => id === wallpaper)?.[1],
       Botões: buttonStyles.find(([id]) => id === buttonStyle)?.[1],
       Texto:
@@ -386,7 +391,7 @@ export function AppearanceEditor({
       <div className="panel design-panel">
         <h2>{group}</h2>
         {group === "Tema" && (
-          <ThemePicker appearance={appearance} update={update} />
+          <ThemePicker appearance={appearance} update={onUpdate} />
         )}
         {group === "Fundo" && (
           <>

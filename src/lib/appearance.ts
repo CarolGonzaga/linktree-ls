@@ -117,6 +117,33 @@ export function getTheme(id: Appearance["themePreset"]) {
   return themePresets.find((preset) => preset.id === id);
 }
 
+export function applyTheme(id: string): Partial<Appearance> {
+  const preset = getTheme(id);
+  if (!preset) return {};
+  return {
+    themePreset: id,
+    themeCustomized: false,
+    palette: id === "wine" || id === "neutral" ? id : "rose",
+    colors: undefined,
+    header: "classic",
+    heading: "text",
+    wallpaper: preset.gradient ? "gradient" : "solid",
+    wallpaperVideo: undefined,
+    gradient: "custom",
+    gradientColor: undefined,
+    gradientDirection: "down",
+    wallpaperNoise: false,
+    buttons: "rounded",
+    buttonStyle: "solid",
+    buttonRadius: "rounded",
+    buttonShadow: "none",
+    font: "dm-sans",
+    titleFont: "playfair",
+    useTitleFont: true,
+    socialPlacement: "top",
+  };
+}
+
 export function getGradientPreset(gradient: Appearance["gradient"]) {
   return Object.entries(gradients).find(([id]) => id === gradient)?.[1];
 }

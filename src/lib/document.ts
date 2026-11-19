@@ -41,6 +41,7 @@ export type PageDocument = {
     header?: "classic" | "hero" | "banner" | "cutout" | "shape";
     heading?: "text" | "logo";
     themePreset?: string;
+    themeCustomized?: boolean;
     wallpaper?: "solid" | "gradient" | "blur" | "pattern" | "image" | "video";
     wallpaperVideo?: string;
     gradient?: "custom" | "rose" | "wine" | "warm";
