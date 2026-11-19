@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from "react";
 import {
+  followerLabel,
   followerNetworks,
   followerTotal,
   followerUrl,
@@ -43,9 +44,7 @@ export function FollowersEditor({
         Exibir total de seguidores
       </button>
       {value.show && savedTotal !== null && (
-        <p>
-          {savedTotal.toLocaleString("pt-BR")} seguidores exibidos no perfil.
-        </p>
+        <p>Exibição no perfil · {followerLabel(savedTotal)}</p>
       )}
       <dialog
         ref={dialog}
@@ -64,7 +63,8 @@ export function FollowersEditor({
         </header>
         <p>
           Vincule seus perfis e informe o número de seguidores de cada rede. As
-          contagens são atualizadas manualmente.
+          contagens são atualizadas manualmente. O total exibido é arredondado
+          para baixo em blocos de 10 mil.
         </p>
         <div className="follower-networks">
           {followerNetworks.map(([id, name, domains]) => {
@@ -190,6 +190,7 @@ export function FollowersEditor({
           />{" "}
           Mostrar total na página pública
         </label>
+        {total !== null && <p>Prévia · {followerLabel(total)}</p>}
         {hasIncompleteProfile && (
           <p>
             Preencha a URL e a contagem de cada perfil ou remova o perfil

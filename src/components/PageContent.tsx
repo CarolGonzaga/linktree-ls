@@ -5,7 +5,7 @@ import {
   useAlternativeTitle,
 } from "../lib/appearance";
 import { fontStack, googleFontStylesheet } from "../lib/fonts";
-import { followerTotal } from "../lib/followers";
+import { followerLabel, followerTotal } from "../lib/followers";
 import {
   initialDocument,
   safeUrl,
@@ -265,10 +265,7 @@ export function PageContent({
           </h1>
           <p className="bio">{profile.description}</p>
           {followers !== null && (
-            <p className="follower-total">
-              {followers.toLocaleString("pt-BR")}{" "}
-              {followers === 1 ? "seguidor" : "seguidores"}
-            </p>
+            <p className="follower-total">{followerLabel(followers)}</p>
           )}
         </header>
         {appearance.socialPlacement !== "bottom" && socials}

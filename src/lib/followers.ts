@@ -14,7 +14,9 @@ export function followerUrl(url: string, domains: readonly string[]) {
   const parsed = safeUrl(url);
   if (!parsed) return "";
   const host = new URL(parsed).hostname;
-  return domains.some((domain) => host === domain || host.endsWith(`.${domain}`))
+  return domains.some(
+    (domain) => host === domain || host.endsWith(`.${domain}`),
+  )
     ? parsed
     : "";
 }
@@ -26,6 +28,11 @@ export function validFollowerCount(value: unknown): value is number {
     value >= 0 &&
     value <= 1_000_000_000
   );
+}
+
+export function followerLabel(total: number) {
+  const thousands = Math.floor(total / 10_000) * 10;
+  return `+${thousands}k seguidores`;
 }
 
 export function followerTotal(followers?: Followers) {
