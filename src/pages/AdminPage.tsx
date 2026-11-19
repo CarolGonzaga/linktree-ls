@@ -16,7 +16,6 @@ import {
   type Social,
 } from "../lib/document";
 const tabs = [
-  "Visão geral",
   "Links",
   "Seções",
   "Redes sociais",
@@ -543,7 +542,7 @@ function DraftEditor({
       setBusy(false);
     }
   }
-  const [tab, setTab] = useState<Tab>("Visão geral");
+  const [tab, setTab] = useState<Tab>("Links");
   const [document, setDocument] = useState<PageDocument>(() =>
     structuredClone(initial.document),
   );
@@ -620,7 +619,7 @@ function DraftEditor({
               }}
             >
               <span aria-hidden="true">
-                {["◫", "↗", "☰", "◎", "♙", "◐", "↑"][i]}
+                {["↗", "☰", "◎", "♙", "◐", "↑"][i]}
               </span>
               {item}
             </button>
@@ -708,63 +707,20 @@ function DraftEditor({
               <div className="page-heading">
                 <p className="eyebrow">PAINEL LENDO SÁFICOS</p>
                 <h1>{tab}</h1>
-                <p>
-                  {tab === "Visão geral"
-                    ? "Um cantinho para conectar nossas histórias ao mundo."
-                    : "Prepare cada detalhe no seu ritmo."}
-                </p>
+                <p>Prepare cada detalhe no seu ritmo.</p>
               </div>
-              {tab === "Visão geral" && (
-                <>
-                  <div className="welcome-card">
-                    <p className="eyebrow">BEM-VINDA AO SEU ESPAÇO</p>
-                    <h2>
-                      Histórias merecem
-                      <br />
-                      bons encontros.
-                    </h2>
-                    <p>
-                      Organize os links, dê o seu toque e veja como tudo fica
-                      antes de publicar.
-                    </p>
-                    <button className="primary" onClick={() => setTab("Links")}>
-                      Cuidar dos links ↗
-                    </button>
-                  </div>
-                  <div className="stats">
-                    <div>
-                      <strong>{document.links.length}</strong>
-                      <span>Links no rascunho</span>
-                    </div>
-                    <div>
-                      <strong>{document.sections.length}</strong>
-                      <span>Seções</span>
-                    </div>
-                    <div>
-                      <strong>{changed ? "Pendente" : "Salvo"}</strong>
-                      <span>Status do rascunho</span>
-                    </div>
-                  </div>
-                  <div className="panel">
-                    <h2>Do rascunho ao próximo encontro</h2>
-                    <ol className="steps">
-                      <li>Edite seus links, perfil e aparência.</li>
-                      <li>Confira tudo na pré-visualização.</li>
-                      <li>Publique quando estiver pronto.</li>
-                    </ol>
-                    <p className="muted">
-                      Salve o rascunho e confira a prévia antes de publicar.
-                    </p>
-                  </div>
-                </>
-              )}
               {tab === "Links" && (
                 <>
                   <div className="section-toolbar">
-                    <p>
-                      {document.links.length}/100 links · use as setas para
-                      ordenar
-                    </p>
+                    <div
+                      className="link-count-card"
+                      aria-label="Contagem de links"
+                    >
+                      <strong>{document.links.length}</strong>
+                      <span>
+                        Links no rascunho<small>Limite de 100 links</small>
+                      </span>
+                    </div>
                     <button
                       className="primary"
                       disabled={document.links.length >= 100}

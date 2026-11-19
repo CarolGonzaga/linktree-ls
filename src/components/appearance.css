@@ -199,13 +199,13 @@
   font-weight: 600;
 }
 .design-workspace .editor {
-  padding: clamp(16px, 3vw, 32px);
+  padding: clamp(16px, 1.7vw, 24px);
   border: 1px solid #eadfe0;
   border-radius: 24px;
   background: #fffdfb;
 }
 .workspace.design-workspace {
-  gap: clamp(20px, 4.5vw, 70px);
+  gap: clamp(20px, 2vw, 32px);
   max-width: 1450px;
 }
 .design-workspace .design-panel {
@@ -213,7 +213,6 @@
   margin-bottom: 0;
 }
 .design-workspace .preview-pane {
-  width: min(32%, 335px);
   border: 4px solid #582b3d;
   border-radius: 27px;
   box-shadow: 0 18px 40px #582b3d17;
@@ -538,14 +537,4 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   margin: 0;
-}
-@media (max-width: 900px) {
-  .design-workspace .preview-pane {
-    order: -1;
-    width: min(100%, 335px);
-    max-height: 420px;
-  }
-  .design-workspace .preview-pane .public-surface {
-    min-height: 340px;
-  }
 }
