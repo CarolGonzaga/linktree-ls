@@ -129,6 +129,219 @@ function ItemActions({
     </div>
   );
 }
+
+function LinkFields({
+  item,
+  sections,
+  onChange,
+  imageUpload,
+}: {
+  item: LinkItem;
+  sections: PageDocument["sections"];
+  onChange: (patch: Partial<LinkItem>) => void;
+  imageUpload: ReactNode;
+}) {
+  return (
+    <>
+      <Field
+        title="Título"
+        value={item.title}
+        maxLength={160}
+        onChange={(title) => onChange({ title })}
+      />
+      <Field
+        title="URL (http ou https)"
+        type="url"
+        value={item.url}
+        maxLength={2048}
+        onChange={(url) => onChange({ url })}
+      />
+      <Field
+        title="Descrição opcional"
+        value={item.description}
+        maxLength={500}
+        multiline
+        onChange={(description) => onChange({ description })}
+      />
+      <div className="field-grid">
+        <label>
+          Seção
+          <select
+            value={item.sectionId}
+            onChange={(e) => onChange({ sectionId: e.target.value })}
+          >
+            <option value="">Sem seção</option>
+            {sections.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Formato
+          <select
+            value={item.style}
+            onChange={(e) =>
+              onChange({
+                style: e.target.value as LinkItem["style"],
+              })
+            }
+          >
+            <option value="card">Cartão</option>
+            <option value="compact">Compacto</option>
+          </select>
+        </label>
+      </div>
+      <Field
+        title="Ícone (símbolo ou emoji)"
+        value={item.icon}
+        maxLength={40}
+        onChange={(icon) => onChange({ icon })}
+      />
+      <Field
+        title="Imagem opcional · URL HTTPS"
+        type="url"
+        value={item.image}
+        maxLength={2048}
+        onChange={(image) => onChange({ image })}
+      />
+      {imageUpload}
+      <div className="checks">
+        <Check
+          checked={item.active}
+          onChange={(active) => onChange({ active })}
+        >
+          Ativo
+        </Check>
+        <Check
+          checked={item.featured}
+          onChange={(featured) => onChange({ featured })}
+        >
+          Em destaque
+        </Check>
+      </div>
+    </>
+  );
+}
+
+function NewLinkDialog({
+  sections,
+  busy,
+  message,
+  failed,
+  uploadControl,
+  onAdd,
+  onClose,
+}: {
+  sections: PageDocument["sections"];
+  busy: boolean;
+  message: string;
+  failed: boolean;
+  uploadControl: (apply: (url: string) => void) => ReactNode;
+  onAdd: (item: LinkItem) => void;
+  onClose: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [item, setItem] = useState<LinkItem>(() => ({
+    id: crypto.randomUUID(),
+    title: "",
+    url: "",
+    description: "",
+    image: "",
+    icon: "",
+    active: true,
+    featured: false,
+    sectionId: "",
+    style: "card",
+  }));
+  const [error, setError] = useState("");
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  function close() {
+    dialog.current?.close();
+    onClose();
+  }
+  function change(patch: Partial<LinkItem>) {
+    setItem((current) => ({ ...current, ...patch }));
+    setError("");
+  }
+  return (
+    <dialog
+      ref={dialog}
+      className="publish-dialog new-link-dialog"
+      aria-labelledby="new-link-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) close();
+      }}
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (busy) return;
+          if (!item.title.trim()) {
+            setError("Informe o título do link.");
+            return;
+          }
+          const url = safeUrl(item.url.trim());
+          if (!url) {
+            setError("Informe uma URL HTTP ou HTTPS válida.");
+            return;
+          }
+          if (item.image && !safeUrl(item.image, true)) {
+            setError("Use uma URL HTTPS válida para a imagem.");
+            return;
+          }
+          onAdd({ ...item, title: item.title.trim(), url });
+          close();
+        }}
+      >
+        <div className="new-link-heading">
+          <h2 id="new-link-title">Novo link</h2>
+          <button
+            type="button"
+            disabled={busy}
+            aria-label="Fechar novo link"
+            onClick={close}
+          >
+            ×
+          </button>
+        </div>
+        <div className="new-link-fields">
+          <fieldset className="editor-fields" disabled={busy}>
+            <LinkFields
+              item={item}
+              sections={sections}
+              onChange={change}
+              imageUpload={uploadControl((image) => change({ image }))}
+            />
+          </fieldset>
+        </div>
+        {error && (
+          <p className="notice" role="alert">
+            {error}
+          </p>
+        )}
+        {message && (
+          <p className="notice" role={failed ? "alert" : "status"}>
+            {message}
+          </p>
+        )}
+        <div className="toolbar-actions new-link-actions">
+          <button type="button" disabled={busy} onClick={close}>
+            Cancelar
+          </button>
+          <button className="primary" type="submit" disabled={busy}>
+            Adicionar ao rascunho
+          </button>
+        </div>
+      </form>
+    </dialog>
+  );
+}
+
 type Draft = { document: PageDocument; revision: number; updated_at: string };
 export default function AdminPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -204,6 +417,7 @@ function DraftEditor({
   const [preview, setPreview] = useState(false);
   const [changed, setChanged] = useState(false);
   const publishDialog = useRef<HTMLDialogElement>(null);
+  const [newLinkOpen, setNewLinkOpen] = useState(false);
   const publicationBlock = changed
     ? "Salve o rascunho antes de publicar."
     : !reviewed && !preview
@@ -554,25 +768,10 @@ function DraftEditor({
                     <button
                       className="primary"
                       disabled={document.links.length >= 100}
-                      onClick={() =>
-                        update({
-                          links: [
-                            ...document.links,
-                            {
-                              id: crypto.randomUUID(),
-                              title: "Novo link",
-                              url: "",
-                              description: "",
-                              image: "",
-                              icon: "↗",
-                              active: true,
-                              featured: false,
-                              sectionId: "",
-                              style: "card",
-                            },
-                          ],
-                        })
-                      }
+                      onClick={() => {
+                        setMessage("");
+                        setNewLinkOpen(true);
+                      }}
                     >
                       + Novo link
                     </button>
@@ -584,114 +783,51 @@ function DraftEditor({
                     </div>
                   )}
                   {document.links.map((item, index) => (
-                    <article className="panel" key={item.id}>
-                      <div className="item-header">
-                        <h2>{item.title || "Novo link"}</h2>
-                        <ItemActions
-                          index={index}
-                          count={document.links.length}
-                          name={item.title}
-                          move={(direction) =>
-                            update({
-                              links: moveItem(document.links, index, direction),
-                            })
-                          }
-                          remove={() =>
-                            update({
-                              links: document.links.filter(
-                                (l) => l.id !== item.id,
-                              ),
-                            })
-                          }
-                        />
-                      </div>
-                      <Field
-                        title="Título"
-                        value={item.title}
-                        maxLength={160}
-                        onChange={(title) => linkUpdate(item.id, { title })}
-                      />
-                      <Field
-                        title="URL (http ou https)"
-                        type="url"
-                        value={item.url}
-                        maxLength={2048}
-                        onChange={(url) => linkUpdate(item.id, { url })}
-                      />
-                      <Field
-                        title="Descrição opcional"
-                        value={item.description}
-                        maxLength={500}
-                        multiline
-                        onChange={(description) =>
-                          linkUpdate(item.id, { description })
-                        }
-                      />
-                      <div className="field-grid">
-                        <label>
-                          Seção
-                          <select
-                            value={item.sectionId}
-                            onChange={(e) =>
-                              linkUpdate(item.id, { sectionId: e.target.value })
-                            }
-                          >
-                            <option value="">Sem seção</option>
-                            {document.sections.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.title}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Formato
-                          <select
-                            value={item.style}
-                            onChange={(e) =>
-                              linkUpdate(item.id, {
-                                style: e.target.value as LinkItem["style"],
+                    <details className="panel link-editor-item" key={item.id}>
+                      <summary>
+                        <span className="link-editor-heading">
+                          <strong>{item.title || "Novo link"}</strong>
+                          <small>{item.url || "URL pendente"}</small>
+                        </span>
+                        <span className="link-editor-status">
+                          {item.active ? "Ativo" : "Inativo"}
+                        </span>
+                      </summary>
+                      <div className="link-editor-body">
+                        <div className="item-header">
+                          <h2>{item.title || "Novo link"}</h2>
+                          <ItemActions
+                            index={index}
+                            count={document.links.length}
+                            name={item.title}
+                            move={(direction) =>
+                              update({
+                                links: moveItem(
+                                  document.links,
+                                  index,
+                                  direction,
+                                ),
                               })
                             }
-                          >
-                            <option value="card">Cartão</option>
-                            <option value="compact">Compacto</option>
-                          </select>
-                        </label>
+                            remove={() =>
+                              update({
+                                links: document.links.filter(
+                                  (l) => l.id !== item.id,
+                                ),
+                              })
+                            }
+                          />
+                        </div>
+                        <LinkFields
+                          item={item}
+                          sections={document.sections}
+                          onChange={(patch) => linkUpdate(item.id, patch)}
+                          imageUpload={uploadControl((image) =>
+                            linkUpdate(item.id, { image }),
+                          )}
+                        />
                       </div>
-                      <Field
-                        title="Ícone (símbolo ou emoji)"
-                        value={item.icon}
-                        maxLength={40}
-                        onChange={(icon) => linkUpdate(item.id, { icon })}
-                      />
-                      <Field
-                        title="Imagem opcional · URL HTTPS"
-                        type="url"
-                        value={item.image}
-                        maxLength={2048}
-                        onChange={(image) => linkUpdate(item.id, { image })}
-                      />
-                      {uploadControl((url) =>
-                        linkUpdate(item.id, { image: url }),
-                      )}
-                      <div className="checks">
-                        <Check
-                          checked={item.active}
-                          onChange={(active) => linkUpdate(item.id, { active })}
-                        >
-                          Ativo
-                        </Check>
-                        <Check
-                          checked={item.featured}
-                          onChange={(featured) =>
-                            linkUpdate(item.id, { featured })
-                          }
-                        >
-                          Em destaque
-                        </Check>
-                      </div>
-                    </article>
+                    </details>
                   ))}
                 </>
               )}
@@ -989,6 +1125,20 @@ function DraftEditor({
             </aside>
           )}
         </div>
+        {newLinkOpen && (
+          <NewLinkDialog
+            sections={document.sections}
+            busy={busy}
+            message={message}
+            failed={failed}
+            uploadControl={uploadControl}
+            onClose={() => setNewLinkOpen(false)}
+            onAdd={(item) => {
+              if (document.links.length >= 100) return;
+              update({ links: [item, ...document.links] });
+            }}
+          />
+        )}
         <dialog
           className="publish-dialog"
           ref={publishDialog}
